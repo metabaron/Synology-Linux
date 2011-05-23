@@ -13,7 +13,7 @@ sabnzbd_resume="http://www.***.net/sabnzbd/api?mode=resume&apikey==*************
 
 synology_server="mathieu@***.dyndns.org"
 synology_TV="/volume1/video/TV"
-synology_Movies="/volume1/video/Movies":
+synology_Movies="/volume1/video/Movies"
 ##Edit stop here
 
 echo -e "Starting synchronisation"
