@@ -33,7 +33,7 @@ else
             cd $tv_directory
             find . -name "*" -type f | grep -i -v "Season " > $home_directory/all_except_season_folder.txt
             wait
-            rsync --recursive --compress --times --progress -e "ssh -i /home/newsgroup/.ssh/id_rsa" --files-from $home_directory/all_except_season_folder.txt $tv_directory $synology_server:$synology_TV
+            rsync --recursive --compress --times --progress -e "ssh -i $home_directory/.ssh/id_rsa" --files-from $home_directory/all_except_season_folder.txt $tv_directory $synology_server:$synology_TV
             wait
             rm $home_directory/all_except_season_folder.txt
 
@@ -41,18 +41,25 @@ else
             cd $tv_directory
             find . -regextype posix-egrep -regex ".+Season .+(nfo|avi|tbn)" > $home_directory/episodes.txt
             wait
-            rsync --remove-source-files --recursive --compress --times --progress -e "ssh -i /home/newsgroup/.ssh/id_rsa" --files-from $home_directory/episodes.txt $tv_directory $synology_server:$synology_TV
+            rsync --remove-source-files --recursive --compress --times --progress -e "ssh -i $home_directory/.ssh/id_rsa" --files-from $home_directory/episodes.txt $tv_directory $synology_server:$synology_TV
             wait
+			echo -e "\t\tNow, let's ask our Synology to reindex our files"
+            cat episodes.txt | sed 's#\(.*\)/.*#\1#' |sort -u > $home_directory/directories.txt
+            while read line
+            do
+                ssh -i $home_directory/.ssh/id_rsa "/usr/syno/sbin/synoindex -A $synology_TV/$line"
+            done < $home_directory/directories.txt
+            rm $home_directory/directories.txt
             rm $home_directory/episodes.txt
             echo -e "\t\tRsync on $tv_directory done"
         else
             echo -e "\t\tCannot rsync $tv_directory - Directory do not exist"
         fi
-        echo -e "\tRun rsync on moviess"
+        echo -e "\tRun rsync on movies"
         if [ -d "$movies_directory" ]
         then
             echo -e "\t\tStarting movies synchronisation"
-            rsync --remove-source-files --recursive --compress --times --progress -e "ssh -i /home/newsgroup/.ssh/id_rsa" $movies_directory $synology_server:$synology_Movies
+            rsync --remove-source-files --recursive --compress --times --progress -e "ssh -i $home_directory/.ssh/id_rsa" $movies_directory $synology_server:$synology_Movies
             wait
             find $movies_directory/* -type d -empty -delete
             wait
