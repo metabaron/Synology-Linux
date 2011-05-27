@@ -47,7 +47,7 @@ else
             cat episodes.txt | sed 's#\(.*\)/.*#\1#' |sort -u > $home_directory/directories.txt
             while read line
             do
-                ssh -i $home_directory/.ssh/id_rsa "/usr/syno/sbin/synoindex -A $synology_TV/$line"
+                ssh $synology_server -i $home_directory/.ssh/id_rsa "/usr/syno/sbin/synoindex -A $synology_TV/$line"
             done < $home_directory/directories.txt
             rm $home_directory/directories.txt
             rm $home_directory/episodes.txt
