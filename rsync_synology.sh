@@ -6,6 +6,7 @@ rsync_pid=`pidof $rsync_command`
 
 tv_directory="/home/newsgroup/downloads/complete/TV"
 movies_directory="/home/newsgroup/downloads/complete/Renamed_movies"
+music_directory="/home/newsgroup/downloads/complete/Music/"
 home_directory="/home/newsgroup"
 
 sabnzbd_pause="http://www.***.net/sabnzbd/api?mode=pause&apikey=***************"
@@ -14,6 +15,7 @@ sabnzbd_resume="http://www.***.net/sabnzbd/api?mode=resume&apikey==*************
 synology_server="mathieu@***.dyndns.org"
 synology_TV="/volume1/video/TV"
 synology_Movies="/volume1/video/Movies"
+synology_Music="/volume1/music"
 ##Edit stop here
 
 echo -e "Starting synchronisation"
@@ -26,6 +28,18 @@ else
     if [ `stat --printf="%s" $home_directory/sabnzbd_pause` == "3" ]
     then
         echo -e "\tSabnzbd stopped, we can keep going on"
+		
+		if [ -d "$music_directory" ]
+        then
+            echo -e "\t\tRun synchronisation for Music"
+            cd $music_directory
+            rsync --remove-source-files --recursive --compress --times --progress -e "ssh -i /home/newsgroup/.ssh/id_rsa" $music_directory $synology_server:$synology_Music
+            wait
+			echo -e "\t\tNow, let's ask our Synology to reindex our files"
+            ssh $synology_server -i /home/newsgroup/.ssh/id_rsa "/usr/syno/bin/synoindex -R $synology_Music"
+            echo -e "\t\tRsync on $music_directory done"
+        fi
+
         echo -e "\tRun rsync on TV series"
         if [ -d "$tv_directory" ]
         then
@@ -47,7 +61,7 @@ else
             cat episodes.txt | sed 's#\(.*\)/.*#\1#' |sort -u > $home_directory/directories.txt
             while read line
             do
-                ssh $synology_server -i $home_directory/.ssh/id_rsa "/usr/syno/sbin/synoindex -A $synology_TV/$line"
+                ssh $synology_server -i $home_directory/.ssh/id_rsa "/usr/syno/bin/synoindex -A $synology_TV/$line"
             done < $home_directory/directories.txt
             rm $home_directory/directories.txt
             rm $home_directory/episodes.txt
@@ -55,6 +69,7 @@ else
         else
             echo -e "\t\tCannot rsync $tv_directory - Directory do not exist"
         fi
+		
         echo -e "\tRun rsync on movies"
         if [ -d "$movies_directory" ]
         then
@@ -63,10 +78,13 @@ else
             wait
             find $movies_directory/* -type d -empty -delete
             wait
+			echo -e "\t\tNow, let's ask our Synology to reindex our files"
+            ssh $synology_server -i /home/newsgroup/.ssh/id_rsa "/usr/syno/bin/synoindex -R $synology_Movies"
             echo -e "\t\tRsync on $movies_directory done"
         else
             echo -e "\t\tCannot rsync $movies_directory - Directory do not exist"
         fi
+		
         echo -e "\tRestarting Sabnzbd"
 		        wget --output-file=$home_directory/sabnzbd_resume_log $sabnzbd_resume --output-document=$home_directory/sabnzbd_resume
         if [ `stat --printf="%s" $home_directory/sabnzbd_resume` == "3" ]
