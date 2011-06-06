@@ -5,7 +5,7 @@ rsync_command="rsync"
 rsync_pid=`pidof $rsync_command`
 
 tv_directory="/home/newsgroup/downloads/complete/TV"
-movies_directory="/home/newsgroup/downloads/complete/Renamed_movies"
+movies_directory="/home/newsgroup/downloads/complete/Renamed_movies/*"
 music_directory="/home/newsgroup/downloads/complete/Music/"
 home_directory="/home/newsgroup"
 
